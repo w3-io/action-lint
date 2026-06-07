@@ -18,12 +18,20 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # Third-party actions pinned to commit SHAs (with version comments
+    # for readability). Avoids tag-flapping / supply-chain mutation —
+    # important here because every action repo will consume this
+    # composite via `uses: w3-io/action-lint@<ref>`.
     - name: "Set up Node.js"
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
       with:
         node-version: "24"
+        # Cache the npm registry for this composite's package-lock.json
+        # (not the consumer's). Saves ~3s on each consumer run after
+        # the first invocation per workflow.
+        cache: "npm"
+        cache-dependency-path: ${{ github.action_path }}/package-lock.json
 
-    # Install only the runtime dep (`yaml`). Skips TS + testing tooling.
     # `npm ci --omit=dev` is ~3s with a small lockfile; the alternative
     # (vendoring node_modules into the repo) clutters the repo and ties
     # callers to a specific Node ABI.
