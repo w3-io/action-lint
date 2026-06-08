@@ -1,0 +1,14 @@
+{
+  "name": "@w3-io/w3-fake-action",
+  "version": "1.0.0",
+  "description": "Hermetic test fixture for action-lint",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@w3-io/action-core": "^0.4.1"
+  }
+}

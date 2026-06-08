@@ -1,7 +1,9 @@
 import type { CheckResult, LintContext } from "../types.js";
 
 export function checkTests(ctx: LintContext): CheckResult[] {
-  const pkg = ctx.readJson("package.json") as Record<string, unknown> | null;
+  // Raw string read powers the substring checks below. The JSON-parsed
+  // variant isn't needed here; if a future check needs it, add the
+  // `readJson` call at that site.
   const pkgStr = ctx.readFile("package.json") ?? "";
 
   return [

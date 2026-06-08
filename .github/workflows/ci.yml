@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+# Cancel in-flight runs on the same branch/PR when a new commit lands.
+# Saves CI minutes on rapid-fire pushes and avoids the second push
+# racing the first.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Third-party actions pinned to commit SHAs (with version
+      # comments). Avoids tag-flapping / supply-chain mutation —
+      # this repo is consumed by ~25 partner action repos via the
+      # composite, so its CI deserves the same supply-chain hygiene
+      # as the action itself.
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run format:check
+
+      - run: npm run lint
+
+      - run: npm test
+
+      # `dist/` is the deliverable for the composite GitHub Action
+      # consumers reach via `uses: w3-io/action-lint@<ref>`. It MUST
+      # stay in lockstep with src/ so callers get the same behaviour
+      # as the typechecker / tests just verified.
+      #
+      # `git status --porcelain dist/` catches every change class —
+      # tracked-modified, untracked-new, deleted, mode-only. The
+      # earlier `git diff --quiet` form would miss a newly-emitted
+      # output file (lands as untracked, no diff).
+      - name: "Verify dist is up to date"
+        run: |
+          npm run build
+          if [ -n "$(git status --porcelain -- dist/)" ]; then
+            echo "::error::dist/ is out of date. Run 'npm run build' locally and commit the diff."
+            git --no-pager status --short -- dist/
+            git --no-pager diff --stat -- dist/
+            exit 1
+          fi

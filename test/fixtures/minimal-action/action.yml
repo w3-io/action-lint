@@ -1,0 +1,5 @@
+name: w3-fake-action
+description: Hermetic test fixture
+runs:
+  using: node24
+  main: dist/index.js

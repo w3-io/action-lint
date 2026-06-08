@@ -1,5 +1,5 @@
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { LintContext } from "./types.js";
 

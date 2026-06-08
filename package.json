@@ -18,7 +18,7 @@
     "build": "tsc",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "eslint src/",
+    "lint": "eslint .",
     "test": "node --test dist/test/**/*.test.js",
     "all": "npm run format && npm run lint && npm run build && npm run test"
   },
@@ -30,10 +30,11 @@
     "@types/node": "^22.0.0",
     "eslint": "^9.0.0",
     "prettier": "^3.4.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.60.1"
   },
   "files": [
-    "dist"
+    "dist/src"
   ],
   "engines": {
     "node": ">=24"

@@ -1,0 +1,71 @@
+name: "W3 action-lint"
+description: "Deterministic standards linter for W3 partner action repos — 31 checks"
+author: "w3.io"
+branding:
+  icon: "check-circle"
+  color: "green"
+
+inputs:
+  json:
+    description: "Emit results as JSON instead of human-readable text"
+    required: false
+    default: "false"
+  quiet:
+    description: "Suppress output; only exit code (0 pass / 1 fail)"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    # Third-party actions pinned to commit SHAs (with version comments
+    # for readability). Avoids tag-flapping / supply-chain mutation —
+    # important here because every action repo will consume this
+    # composite via `uses: w3-io/action-lint@<ref>`.
+    - name: "Set up Node.js"
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: "24"
+        # Cache the npm registry for this composite's package-lock.json
+        # (not the consumer's). Saves ~3s on each consumer run after
+        # the first invocation per workflow.
+        cache: "npm"
+        cache-dependency-path: ${{ github.action_path }}/package-lock.json
+
+    # Preflight: dist/src/index.js MUST exist at the resolved action
+    # ref. Without it, the lint step fails with a Node module-not-found
+    # error that hides the real cause (someone tagged the action without
+    # rebuilding, or pointed `uses:` at a branch that drifted). The
+    # error message names the path so the consumer sees exactly what's
+    # missing.
+    - name: "Preflight: verify action-lint dist is present"
+      shell: bash
+      run: |
+        entry="${{ github.action_path }}/dist/src/index.js"
+        if [ ! -f "$entry" ]; then
+          echo "::error::action-lint dist missing at $entry — pinned ref was likely tagged without 'npm run build'. Re-tag this action's repo or pin to a ref where dist/ is committed."
+          exit 1
+        fi
+
+    # `npm ci --omit=dev` is ~3s with a small lockfile; the alternative
+    # (vendoring node_modules into the repo) clutters the repo and ties
+    # callers to a specific Node ABI.
+    - name: "Install runtime deps"
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci --omit=dev --no-audit --no-fund --silent
+
+    # Lint runs against the *caller's* repo (github.workspace), but
+    # the entry point lives in this composite action's checkout
+    # (github.action_path). Argument flags map 1:1 to the CLI.
+    - name: "Run lint"
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        ACTION_LINT_JSON: ${{ inputs.json }}
+        ACTION_LINT_QUIET: ${{ inputs.quiet }}
+      run: |
+        args=()
+        [ "${ACTION_LINT_JSON}" = "true" ] && args+=(--json)
+        [ "${ACTION_LINT_QUIET}" = "true" ] && args+=(--quiet)
+        node "${{ github.action_path }}/dist/src/index.js" "${args[@]}"

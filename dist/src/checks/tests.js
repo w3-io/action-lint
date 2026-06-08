@@ -1,5 +1,7 @@
 export function checkTests(ctx) {
-    const pkg = ctx.readJson("package.json");
+    // Raw string read powers the substring checks below. The JSON-parsed
+    // variant isn't needed here; if a future check needs it, add the
+    // `readJson` call at that site.
     const pkgStr = ctx.readFile("package.json") ?? "";
     return [
         // D12: no jest

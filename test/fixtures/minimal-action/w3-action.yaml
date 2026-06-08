@@ -1,0 +1,13 @@
+kind: integration
+partner: fixture
+name: Fixture
+version: 1.0.0
+repo: w3-io/w3-fake-action
+description: Hermetic fixture
+commands:
+  - name: noop
+    description: No-op command
+    inputs: {}
+    outputs:
+      result:
+        type: object
