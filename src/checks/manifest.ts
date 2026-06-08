@@ -37,11 +37,11 @@ export function checkManifest(ctx: LintContext): CheckResult[] {
 
   const commands = manifest.commands ?? [];
 
-  // M30: every command has inputs (at least an empty {} block)
-  const missingInputs = commands.filter(
-    (c) => c.inputs === undefined && c.inputs !== null,
-  );
-  // Commands with inputs: {} are fine (discovery commands)
+  // M30: every command has inputs (at least an empty {} block).
+  // Commands with inputs: {} are fine (discovery commands). The
+  // distinction that matters is whether the `inputs` key exists at
+  // all — earlier code computed a parallel `missingInputs` filter
+  // that was a tautology and went unused; removed.
   const commandsWithoutInputs = commands.filter((c) => !("inputs" in c));
   results.push({
     id: "M30",

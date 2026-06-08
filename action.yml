@@ -32,6 +32,21 @@ runs:
         cache: "npm"
         cache-dependency-path: ${{ github.action_path }}/package-lock.json
 
+    # Preflight: dist/src/index.js MUST exist at the resolved action
+    # ref. Without it, the lint step fails with a Node module-not-found
+    # error that hides the real cause (someone tagged the action without
+    # rebuilding, or pointed `uses:` at a branch that drifted). The
+    # error message names the path so the consumer sees exactly what's
+    # missing.
+    - name: "Preflight: verify action-lint dist is present"
+      shell: bash
+      run: |
+        entry="${{ github.action_path }}/dist/src/index.js"
+        if [ ! -f "$entry" ]; then
+          echo "::error::action-lint dist missing at $entry — pinned ref was likely tagged without 'npm run build'. Re-tag this action's repo or pin to a ref where dist/ is committed."
+          exit 1
+        fi
+
     # `npm ci --omit=dev` is ~3s with a small lockfile; the alternative
     # (vendoring node_modules into the repo) clutters the repo and ties
     # callers to a specific Node ABI.

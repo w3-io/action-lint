@@ -1,8 +1,15 @@
 import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 
 export default [
-  js.configs.recommended,
   {
+    ignores: ["dist/", "node_modules/", "test/fixtures/**"],
+  },
+  // Base config for any file — the `files:` glob is required under
+  // ESLint 9 flat config or files won't actually be linted (the dir
+  // arg on the CLI alone doesn't qualify them).
+  {
+    files: ["**/*.{js,mjs,cjs,ts,tsx}"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
@@ -34,8 +41,31 @@ export default [
         structuredClone: "readonly",
       },
     },
+  },
+  js.configs.recommended,
+  // TypeScript files: layer the recommended TS configs on top so .ts
+  // sources get type-aware linting. Without this, `eslint .` silently
+  // skips all .ts files because no TS parser is registered for them.
+  ...tseslint.configs.recommended.map((c) => ({
+    ...c,
+    files: ["**/*.ts"],
+  })),
+  {
+    files: ["**/*.{js,mjs,cjs,ts,tsx}"],
     rules: {
       "no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+    },
+  },
+  // TypeScript: defer no-unused-vars to the TS variant which
+  // understands type-only imports and interface-merge patterns.
+  {
+    files: ["**/*.ts"],
+    rules: {
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
   {
@@ -45,8 +75,5 @@ export default [
         global: "readonly",
       },
     },
-  },
-  {
-    ignores: ["dist/", "node_modules/"],
   },
 ];
