@@ -34,7 +34,7 @@
     "typescript-eslint": "^8.60.1"
   },
   "files": [
-    "dist"
+    "dist/src"
   ],
   "engines": {
     "node": ">=24"

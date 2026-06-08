@@ -1,9 +1,7 @@
 export function checkTests(ctx) {
-    // Raw string read used for substring checks below; the parsed-JSON
-    // variant is intentionally not consumed here so use `_pkg` to keep
-    // the lazy-load primed for any future checks added in this group.
-    const _pkg = ctx.readJson("package.json");
-    void _pkg;
+    // Raw string read powers the substring checks below. The JSON-parsed
+    // variant isn't needed here; if a future check needs it, add the
+    // `readJson` call at that site.
     const pkgStr = ctx.readFile("package.json") ?? "";
     return [
         // D12: no jest
